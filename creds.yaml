@@ -1,3 +1,6 @@
 email: prajwalgh13@gmail.com
 username: GHoolageri33506
 password: "!/8D_BV!8KkXDW5"
+uri : "mongodb+srv://admin:RtnPUAi3LSI7n7rx@twitter-scrapping.cpib0.mongodb.net/?retryWrites=true&w=majority&appName=Twitter-Scrapping"
+dbname : trending_db
+collection : trends
