@@ -1,66 +1,42 @@
-import streamlit as st
-from selenium.webdriver.support import expected_conditions as EC
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support.wait import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
+from flask import Flask, render_template, send_file
+from flask_socketio import SocketIO
+from pymongo import MongoClient
+import subprocess
 import time
-import yaml
+import certifi
+from pymongo.server_api import ServerApi
 
-with open("creds.yaml", "r") as file:
-    creds = yaml.safe_load(file)
-EMAIL = creds['email']
-USERNAME = creds['username']
-PASSWORD = creds['password']
+app = Flask(__name__, template_folder='templates')
+socketio = SocketIO(app)
 
-st.title("Top 5 Trending Topics on X (Twitter)")
+uri = "mongodb+srv://admin:RtnPUAi3LSI7n7rx@twitter-scrapping.cpib0.mongodb.net/?retryWrites=true&w=majority&appName=Twitter-Scrapping"
+client = MongoClient(uri, tlsCAFile=certifi.where(), server_api=ServerApi('1'))
+db = client["trending_db"]
+collection = db["trends"]
 
-options = webdriver.ChromeOptions()
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+def fetch_latest_document():
+    return collection.find_one(sort=[("_id", -1)])
 
-try:
-    driver.get("https://twitter.com/login")
-    time.sleep(3)
+@app.route('/')
+def index():
+    subprocess.Popen(["python3", "scrapping with proxy.py"])
+    return send_file('/Users/starkz/PycharmProjects/Web Scrapping/templetes/index.html')
 
-    username_input = driver.find_element(By.XPATH, "//input[@autocomplete='username']")
-    username_input.send_keys(EMAIL)
-    username_input.send_keys(Keys.RETURN)
-    time.sleep(3)
+@socketio.on('get_latest_trend')
+def send_latest_trend():
+    latest_doc = fetch_latest_document()
+    if latest_doc:
+        socketio.emit('update_trend', latest_doc)
 
-    username_input = driver.find_element(By.NAME, "text")
-    username_input.send_keys(USERNAME)
-    username_input.send_keys(Keys.RETURN)
-    time.sleep(3)
+def watch_database():
+    last_id = None
+    while True:
+        latest_doc = fetch_latest_document()
+        if latest_doc and latest_doc['_id'] != last_id:
+            last_id = latest_doc['_id']
+            socketio.emit('update_trend', latest_doc)
+        time.sleep(5)
 
-    password_input = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.NAME, "password"))
-    )
-    password_input.send_keys(PASSWORD)
-    password_input.send_keys(Keys.RETURN)
-
-    time.sleep(5)
-
-    driver.get("https://x.com/explore/tabs/trending")
-    time.sleep(5)
-
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, "//div[@data-testid='trend']"))
-    )
-
-    trends = driver.find_elements(By.XPATH, "//div[@data-testid='trend']//span[contains(@class, 'css-1jxf684')]")
-
-    if any("Promoted" in trend.get_attribute('innerHTML') for trend in trends[:4]):
-        trends = trends[4:]
-    else:
-        pass
-
-    top_5_trends_html = [trend.get_attribute('innerHTML') for trend in trends if trend.text.startswith('#')][:5]
-
-    st.subheader("Top 5 Trending Topics:")
-    for i, trend_html in enumerate(top_5_trends_html, 1):
-        st.write(f"{i}. {trend_html}")
-
-finally:
-    driver.quit()
+if __name__ == '__main__':
+    socketio.start_background_task(watch_database)
+    socketio.run(app, debug=False)
