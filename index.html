@@ -37,15 +37,17 @@
     </style>
 </head>
 <body>
-    <h1>Latest Twitter Trend</h1>
-    <div class="data-container">
-        <p><strong>Trend:</strong> <span id="trend">{{ trend }}</span></p>
-        <p><strong>Date:</strong> <span id="date">{{ date.split('T')[0] }}</span></p>
-        <p><strong>Time:</strong> <span id="time">{{ date.split('T')[1][:8] }}</span></p>
-    </div>
 
+    <h1>Latest Twitter Trend</h1>
     <button onclick="refreshData()">Refresh Data</button>
     <button onclick="runScript()">Run Scraping</button>
+    <br /><br /><br />
+
+    <div class="data-container">
+        <p><strong>Trend:</strong> <span id="trend">{{ trend }}</span></p>
+        <p><strong>Date:</strong> <span id="date">{{ date }}</span></p>
+        <p><strong>Date:</strong> <span id="IP address">{{ ip }}</span></p>
+    </div>
 
     <script>
         function refreshData() {
