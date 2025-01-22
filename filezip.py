@@ -52,7 +52,7 @@ def create_proxy_extension(proxy_host, proxy_port, proxy_user, proxy_pass):
 
 proxy_host = "in.proxymesh.com"
 proxy_port = "31280"
-proxy_user = "PGHRL"
-proxy_pass = "prajwal2003"
+proxy_user = "PGH"
+proxy_pass = "prajwal2003@"
 
 create_proxy_extension(proxy_host, proxy_port, proxy_user, proxy_pass)
